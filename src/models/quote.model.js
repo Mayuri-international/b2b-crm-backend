@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 
 const vendorSplitSchema = new mongoose.Schema({
     vendorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor', required: true },
+    description: String,
     quantity: Number,
     costPerUnit: Number,
     advance: Number,
@@ -30,6 +31,7 @@ const quoteSchema = new mongoose.Schema({
     totalAmount: Number,
     reason: String, // reason for revision if not version 1
     notes: String,
+    image:String,
     sentToClient: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     status: { type: String, enum: ['Draft', 'Finalized'], default: 'Draft' },

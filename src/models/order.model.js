@@ -1,6 +1,8 @@
 
 import mongoose from "mongoose";
 
+import Quote from "./quote.model.js";
+
 const vendorAssignmentSchema = new mongoose.Schema({
     vendorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor' },
     itemRef: String,
@@ -24,7 +26,7 @@ const orderSchema = new mongoose.Schema({
     installation: Number,
     gstAmount: Number,
     totalPayable: Number,
-    invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice' },
+    finalQuotationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quote' },
     vendorAssignments: [vendorAssignmentSchema],
     documents: [String],  // URLs of delivery proofs, receipts etc.
     deliveryStatus: {
