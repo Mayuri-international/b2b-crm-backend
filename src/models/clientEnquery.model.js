@@ -64,7 +64,12 @@ const clientSchema = new mongoose.Schema({
   // Follow-ups
   followUps: [
     {
+      _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
       followUpDate: Date,
+      noteAddByUser: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
       followUpNote: String,
       done: { type: Boolean, default: false },
       responses: [
@@ -76,6 +81,7 @@ const clientSchema = new mongoose.Schema({
       ]
     }
   ],
+
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

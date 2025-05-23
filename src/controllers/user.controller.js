@@ -4,16 +4,21 @@ import User from "../models/user.model.js";
 
 import responseHandler from "../utils/responseHandler.js";
 
-import { user_role,enquery_status } from "../utils/data.js";
+import { user_role, enquery_status } from "../utils/data.js";
 import Client from "../models/clientEnquery.model.js";
 
-const createUser = async(req,res)=>{
+import bcrypt from "bcryptjs";
 
-    try{
 
-        const {name,email,passwordHash,role,isActive} = req.body;
+// create new User 
 
-        if(!name || !email || !passwordHash || !role){
+const createUser = async (req, res) => {
+
+    try {
+
+        const { name, email, password, role, isActive } = req.body;
+
+        if (!name || !email || !password || !role) {
 
             return responseHandler(res, 400, false, "Please fill all the fields");
 
@@ -21,22 +26,24 @@ const createUser = async(req,res)=>{
 
         // check user is already exists or not by checking email 
 
-        const userExists = await User.findOne({email});
+        const userExists = await User.findOne({ email });
 
-        if(userExists){
+        if (userExists) {
 
             return responseHandler(res, 400, false, "User already exists");
 
         }
 
-        const newUser  = await User.create({name,email,passwordHash,role});
+        let hashedPassword = bcrypt.hashSync(password, 6);
+
+        const newUser = await User.create({ name, email, password: hashedPassword, role });
 
         return responseHandler(res, 201, true, "User created successfully", newUser);
 
 
-    }catch(error){
+    } catch (error) {
 
-        console.log("error is ",error);
+        console.log("error is ", error);
 
         return responseHandler(res, 500, false, "Something went wrong", null, error);
     }
@@ -45,17 +52,17 @@ const createUser = async(req,res)=>{
 // get All Sales person 
 
 
-const getAllSalesPerson = async(req,res)=>{
+const getAllSalesPerson = async (req, res) => {
 
-    try{
+    try {
 
-        const salesPerson = await User.find({role:user_role.sales}).select("name email");
+        const salesPerson = await User.find({ role: user_role.sales });
         return responseHandler(res, 200, true, "Sales person fetched successfully", salesPerson);
 
 
-    }catch(error){
+    } catch (error) {
 
-        console.log("error is ",error);
+        console.log("error is ", error);
 
         return responseHandler(res, 500, false, "Something went wrong", null, error);
 
@@ -63,19 +70,41 @@ const getAllSalesPerson = async(req,res)=>{
 }
 
 
+
+// get all members data 
+
+const getAllMembersData = async (req, res) => {
+
+    try {
+
+
+        const nonAdmins = await User.find({ role: { $ne: user_role.admin } });
+
+        return responseHandler(res, 200, true, "Sales person fetched successfully", nonAdmins);
+
+
+    } catch (error) {
+
+        console.log("error is ", error);
+
+    }
+}
+
+
+
+
 // assign a person to the query 
 
+const assignPersonToEnquery = async (req, res) => {
 
-const assignPersonToEnquery = async(req,res)=>{
-
-    try{
+    try {
 
 
-        const adminId ="681f4ca937491ad52145d7da";
+        const adminId = "681f4ca937491ad52145d7da";
 
-        const {enqueryId,salesPersonId} = req.body;
+        const { enqueryId, salesPersonId } = req.body;
 
-        if(!enqueryId || !salesPersonId){
+        if (!enqueryId || !salesPersonId) {
 
             return responseHandler(res, 400, false, "Please fill all the fields");
 
@@ -85,7 +114,7 @@ const assignPersonToEnquery = async(req,res)=>{
 
         const isEnqueryExists = await Client.findById(enqueryId);
 
-        if(!isEnqueryExists){
+        if (!isEnqueryExists) {
 
             return responseHandler(res, 400, false, "Enquery does not exists");
 
@@ -95,7 +124,7 @@ const assignPersonToEnquery = async(req,res)=>{
 
         const isSalesPersonExists = await User.findById(salesPersonId);
 
-        if(!isSalesPersonExists){
+        if (!isSalesPersonExists) {
 
             return responseHandler(res, 400, false, "Sales person does not exists");
 
@@ -103,19 +132,19 @@ const assignPersonToEnquery = async(req,res)=>{
 
         // assign the sales person to the enquery 
 
-        const updatedQueryData = await Client.findByIdAndUpdate(enqueryId,{
+        const updatedQueryData = await Client.findByIdAndUpdate(enqueryId, {
 
-            assignedTo:salesPersonId,
-            assignedBy:adminId,
-            status:enquery_status.Assigned,
-            
+            assignedTo: salesPersonId,
+            assignedBy: adminId,
+            status: enquery_status.Assigned,
+
         })
 
         return responseHandler(res, 200, true, "Sales person assigned successfully", updatedQueryData);
 
-    }catch(error){
+    } catch (error) {
 
-        console.log("error is ",error);
+        console.log("error is ", error);
 
         return responseHandler(res, 500, false, "Something went wrong", null, error);
 
@@ -123,12 +152,64 @@ const assignPersonToEnquery = async(req,res)=>{
 }
 
 
+// update the members data --> route -> update-members-data
+
+const updateMembersData = async (req, res) => {
+
+    try{
+
+        const {name,email,passowrd,role,userId} = req.body;
+
+
+        console.log("name : ",name,"email : ",email,"passowrd : ",passowrd,"role : ",role,"userId : ",userId);
+
+        let dataToUpdate = {};
+
+        if(name){
+            
+            dataToUpdate.name = name;
+            
+        }
+
+        if(email){
+            
+            dataToUpdate.email = email;
+            
+        }
+
+        if(role){
+            
+            dataToUpdate.role = role;
+            
+        }
+
+        if(passowrd){
+            
+            let hashedPassword = bcrypt.hashSync(password, 6);
+            dataToUpdate.password = hashedPassword;
+            
+        }
+
+        const updatedData = await User.findByIdAndUpdate(userId,dataToUpdate);
+
+        return responseHandler(res,200,true,"data updated successfully",updatedData);
+
+    }catch(error){
+
+        console.log("error is : ",error);
+
+        return responseHandler(res,500,false,"error occur while updating the data",null);
+    }
+}
+
 
 export {
 
     createUser,
     getAllSalesPerson,
-    assignPersonToEnquery
+    assignPersonToEnquery,
+    getAllMembersData,
+    updateMembersData
 
 }
 

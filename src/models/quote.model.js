@@ -25,6 +25,8 @@ const quoteSchema = new mongoose.Schema({
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
     version: { type: Number, required: true },
     items: [quoteItemSchema],
+    addedBy:{type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    gstPercent: Number,
     taxPercent: Number,
     transport: Number,
     installation: Number,

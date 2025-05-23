@@ -2,13 +2,15 @@
 
 import mongoose from "mongoose";
 
+import { user_role } from "../utils/data.js";
+
 const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
+  password: { type: String, required: true },
   role: {
     type: String,
-    enum: ['admin', 'sales', 'vendor'],
+    enum: Object.values(user_role),
     default: 'sales'
   },
   vendorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor' }, // for vendor login users only

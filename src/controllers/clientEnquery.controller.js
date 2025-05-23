@@ -56,7 +56,15 @@ const getAllEnquery = async (req, res) => {
 
     try {
 
-        const allEnquery = await Client.find().populate("assignedTo").sort({ createdAt: -1 });
+        const allEnquery = await Client.find()
+            .populate("assignedTo", "name")
+            .populate("assignedBy", "name")
+            .populate("followUps.noteAddByUser", "name") // ✅ Populating the user who added the note
+            .populate({
+                path: "followUps.responses.respondedBy",
+                select: "name",
+            })
+            .sort({ createdAt: -1 });
         return responseHandler(res, 200, true, "Enquery fetched successfully", allEnquery);
 
     } catch (error) {
@@ -323,7 +331,11 @@ const addNewFollowups = async (req, res) => {
 
     try {
 
-        const { enqueryId, followUpDate, followUpNote } = req.body;
+        // although we can get this by 
+
+        const { enqueryId, followUpDate, followUpNote, noteAddByUser } = req.body;
+
+        console.log("all required fileds are ",enqueryId, followUpDate, followUpNote, noteAddByUser)
 
         if (!enqueryId || !followUpDate || !followUpNote) {
 
@@ -351,15 +363,86 @@ const addNewFollowups = async (req, res) => {
 }
 
 
+
+
+// add respond to the notes by sales user
+
+const respondToFollowUps = async (req, res) => {
+
+    try {
+        const { message, respondedBy, enqueryId, followUpId } = req.body;
+
+        console.log("all required fileds are ",message, respondedBy, enqueryId, followUpId)
+
+        if (!message || !respondedBy || !enqueryId || !followUpId) {
+            return responseHandler(res, 400, false, "All fields are required", null);
+        }
+
+        const user = await User.findById(respondedBy);
+        if (!user) {
+            return responseHandler(res, 400, false, "User does not exist", null);
+        }
+
+        const client = await Client.findById(enqueryId);
+        if (!client) {
+            return responseHandler(res, 400, false, "Enquiry not found", null);
+        }
+
+        // Find the followUp by followUpId
+        const followUp = client.followUps.id(followUpId);
+        if (!followUp) {
+            return responseHandler(res, 400, false, "Follow-up not found", null);
+        }
+
+        // Push the response
+        followUp.responses.push({
+            message,
+            respondedBy
+        });
+
+        await client.save();
+
+        const populatedFollowUpData = await Client.findById(enqueryId).populate("assignedTo", "name")
+        .populate("assignedBy", "name")
+        .populate("followUps.noteAddByUser", "name") // ✅ Populating the user who added the note
+        .populate({
+            path: "followUps.responses.respondedBy",
+            select: "name",
+        })
+
+        console.log("populated follow up data  with response ",populatedFollowUpData);
+
+        let filteredFollowUps = populatedFollowUpData.followUps.id(followUpId);
+
+        if (!filteredFollowUps) {
+            return responseHandler(res, 400, false, "Follow-up not found", null);
+        }
+
+        console.log("filtered followups response ",filteredFollowUps.responses[filteredFollowUps.responses.length -1]);
+
+        return responseHandler(res, 200, true, "Response added successfully",filteredFollowUps.responses[filteredFollowUps.responses.length -1]);
+
+
+    } catch (error) {
+        console.log("Error is", error);
+        return responseHandler(res, 500, false, "Internal Server Error");
+    }
+};
+
+
+
+
+// delete specific follow ups 
+
 const deleteSpecificFollowUp = async (req, res) => {
 
-    try{
+    try {
 
-      
 
-    }catch(error){
 
-        console.log("error is ",error);
+    } catch (error) {
+
+        console.log("error is ", error);
 
     }
 }
@@ -367,28 +450,28 @@ const deleteSpecificFollowUp = async (req, res) => {
 
 // get all vendors  
 
-const getAllSalesPersonData = async(req,res)=>{
+const getAllSalesPersonData = async (req, res) => {
 
-    try{
+    try {
 
         const allVendorsData = await User.find({
 
-            role:user_role.sales,
+            role: user_role.sales,
         });
 
-        if(allVendorsData.length == 0){
+        if (allVendorsData.length == 0) {
 
-            return responseHandler(res,400,false,"no vendor found ",null,null);
+            return responseHandler(res, 400, false, "no vendor found ", null, null);
         }
 
-        return responseHandler(res,200,true,"all vendors fetched success",allVendorsData,null);
+        return responseHandler(res, 200, true, "all vendors fetched success", allVendorsData, null);
 
 
-    }catch(error){
+    } catch (error) {
 
-        console.log("error is :",error);
+        console.log("error is :", error);
 
-        return responseHandler(res,500,false,"error occur while fetch the vendors",null,error);
+        return responseHandler(res, 500, false, "error occur while fetch the vendors", null, error);
     }
 
 }
@@ -403,8 +486,9 @@ export {
     getAllEnquery,
     assignVendorToEnquiry,
     deleteVendorAssignment,
-    getAllSalesPersonData
-    
+    getAllSalesPersonData,
+    respondToFollowUps
+
 
 }
 

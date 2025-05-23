@@ -7,34 +7,19 @@ import Client from "../models/clientEnquery.model.js";
 
 import uploadImage from "../utils/upload.js";
 
-// const vendorSplitSchema = new mongoose.Schema({
-//     vendorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor', required: true },
-//     quantity: Number,
-//     costPerUnit: Number,
-//     advance: Number,
-//     deliveryDate: Date
-// });
 
-// const quoteItemSchema = new mongoose.Schema({
-//     description: { type: String, required: true },
-//     hsn: String,
-//     unit: String,
-//     quantity: Number,
-//     finalUnitPrice: Number,
-//     subtotal: Number,
-//     vendors: [vendorSplitSchema]
-// });
-
-
+// create an new quote for the specific enquery 
 
 const createNewQuote = async (req, res) => {
   try {
 
-    console.log("req body is ", req.body);
+    console.log("req body is ", JSON.parse(req.body?.data));
+
 
     const {
       clientId,
       items,
+      // addedBy,
       taxPercent = 0,
       transport = 0,
       installation = 0,
@@ -42,7 +27,7 @@ const createNewQuote = async (req, res) => {
       reason,
       notes,
       image,
-    } = req.body;
+    } = JSON.parse(req.body?.data);
 
     console.log("req.body",
       clientId,
@@ -53,8 +38,19 @@ const createNewQuote = async (req, res) => {
       totalAmount,
       reason,
       notes,
-      image
+  
     );
+
+    console.log("image is ",req.files?.image);
+
+    let imageFilePath = req.files?.image;
+
+    // console.log("inside body image is ",req.body?.image);
+
+    if(!clientId){
+
+      return responseHandler(res, 400, false, null, "Client ID is required");
+    }
 
     if (!clientId || !items || items.length === 0) {
       return responseHandler(res, 400, false, null, "Client ID and at least one quote item are required.");
@@ -70,10 +66,9 @@ const createNewQuote = async (req, res) => {
 
     let uploadedImageUrl ="";
 
-    
     try{
 
-      const result = await uploadImage(image);
+      const result = await uploadImage(imageFilePath.tempFilePath);
 
       uploadedImageUrl = result;
 
@@ -126,17 +121,41 @@ const createNewQuote = async (req, res) => {
 
     await newQuote.save();
 
-    return responseHandler(res, 200, true, newQuote, "Quote created successfully.");
+    return responseHandler(res, 200, true,"Quote created successfully.", newQuote);
   } catch (error) {
     console.error("Quote creation error:", error);
-    return responseHandler(res, 500, false, null, error.message);
+    return responseHandler(res, 500, false, "some went wrong",null, error.message);
   }
 };
 
 
+// get the all the quote revisions for the specific enquery
 
-export default createNewQuote;
+const getAllQuoteRevisions = async (req, res) => {
 
+  try{
+
+    const {enqueryId} = req.params;
+
+    if(!enqueryId){
+
+      return responseHandler(res,400,false,"enquery id is required");
+
+    }
+
+    const quotes = await Quote.find({clientId:enqueryId}).populate("clientId");
+
+    return responseHandler(res,200,true,"quotes fetched successfully",quotes);
+
+
+  }catch(error){
+
+    console.log("error is :",error);
+
+    return responseHandler(res,500,false,"error occur while fetch the quotes",null,error);
+
+  }
+}
 
 
 // update the  status of the quote 
@@ -153,5 +172,13 @@ export const updateQuoteStatus = async(req,res)=>{
 
     responseHandler()
   }
+}
+
+
+
+export {
+
+  createNewQuote,
+  getAllQuoteRevisions
 }
 
