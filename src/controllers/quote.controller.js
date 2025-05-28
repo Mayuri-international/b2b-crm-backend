@@ -13,13 +13,24 @@ import uploadImage from "../utils/upload.js";
 const createNewQuote = async (req, res) => {
   try {
 
-    console.log("req body is ", JSON.parse(req.body?.data));
+    const rawData = req.body?.data;
 
+    console.log("req ke body data is ", req.body);
+
+    if (!rawData) {
+      return responseHandler(res, 400, false, null, "Missing quote data in request.");
+    }
+
+    let parsedData;
+    try {
+      parsedData = JSON.parse(rawData);
+    } catch (err) {
+      return responseHandler(res, 400, false, null, "Invalid JSON format in quote data.");
+    }
 
     const {
       clientId,
       items,
-      // addedBy,
       taxPercent = 0,
       transport = 0,
       installation = 0,
@@ -27,27 +38,15 @@ const createNewQuote = async (req, res) => {
       reason,
       notes,
       image,
-    } = JSON.parse(req.body?.data);
+    } = parsedData;
 
-    console.log("req.body",
-      clientId,
-      items,
-      taxPercent,
-      transport,
-      installation,
-      totalAmount,
-      reason,
-      notes,
-  
-    );
-
-    console.log("image is ",req.files?.image);
+    console.log("image is ", req.files?.image);
 
     let imageFilePath = req.files?.image;
 
     // console.log("inside body image is ",req.body?.image);
 
-    if(!clientId){
+    if (!clientId) {
 
       return responseHandler(res, 400, false, null, "Client ID is required");
     }
@@ -64,23 +63,28 @@ const createNewQuote = async (req, res) => {
 
     // upload image to the cloudinary 
 
-    let uploadedImageUrl ="";
+    let uploadedImageUrl = "";
 
-    try{
+    if (imageFilePath) {
 
-      const result = await uploadImage(imageFilePath.tempFilePath);
+      try {
 
-      uploadedImageUrl = result;
+        const result = await uploadImage(imageFilePath.tempFilePath);
 
-    }catch(error){
+        uploadedImageUrl = result;
 
-      console.log("image url is ",uploadedImageUrl);
+      } catch (error) {
 
-      return responseHandler(res,400,false,"error occur while uplaodin the image ",null,error);
+        console.log("image url is ", uploadedImageUrl);
+
+        return responseHandler(res, 400, false, "error occur while uplaodin the image ", null, error);
+
+      }
 
     }
 
-    console.log("uploaded image url ",uploadedImageUrl);
+
+    console.log("uploaded image url ", uploadedImageUrl);
 
     // Get latest quote version for the client
     const existingQuotes = await Quote.find({ clientId });
@@ -114,17 +118,17 @@ const createNewQuote = async (req, res) => {
       totalAmount: finalTotal,
       reason: version > 1 ? reason : undefined,
       notes,
-      image:uploadedImageUrl,
+      image: uploadedImageUrl || "",
       createdBy: req.user?._id || null, // assuming auth middleware
       status: 'Draft'
     });
 
     await newQuote.save();
 
-    return responseHandler(res, 200, true,"Quote created successfully.", newQuote);
+    return responseHandler(res, 200, true, "Quote created successfully.", newQuote);
   } catch (error) {
     console.error("Quote creation error:", error);
-    return responseHandler(res, 500, false, "some went wrong",null, error.message);
+    return responseHandler(res, 500, false, "some went wrong", null, error.message);
   }
 };
 
@@ -133,26 +137,26 @@ const createNewQuote = async (req, res) => {
 
 const getAllQuoteRevisions = async (req, res) => {
 
-  try{
+  try {
 
-    const {enqueryId} = req.params;
+    const { enqueryId } = req.params;
 
-    if(!enqueryId){
+    if (!enqueryId) {
 
-      return responseHandler(res,400,false,"enquery id is required");
+      return responseHandler(res, 400, false, "enquery id is required");
 
     }
 
-    const quotes = await Quote.find({clientId:enqueryId}).populate("clientId");
+    const quotes = await Quote.find({ clientId: enqueryId }).populate("clientId");
 
-    return responseHandler(res,200,true,"quotes fetched successfully",quotes);
+    return responseHandler(res, 200, true, "quotes fetched successfully", quotes);
 
 
-  }catch(error){
+  } catch (error) {
 
-    console.log("error is :",error);
+    console.log("error is :", error);
 
-    return responseHandler(res,500,false,"error occur while fetch the quotes",null,error);
+    return responseHandler(res, 500, false, "error occur while fetch the quotes", null, error);
 
   }
 }
@@ -161,14 +165,14 @@ const getAllQuoteRevisions = async (req, res) => {
 // update the  status of the quote 
 
 
-export const updateQuoteStatus = async(req,res)=>{
+export const updateQuoteStatus = async (req, res) => {
 
-  try{
+  try {
 
 
-  }catch(error){
+  } catch (error) {
 
-    console.log("error is ",error);
+    console.log("error is ", error);
 
     responseHandler()
   }

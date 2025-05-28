@@ -158,10 +158,10 @@ const updateMembersData = async (req, res) => {
 
     try{
 
-        const {name,email,passowrd,role,userId} = req.body;
+        const {name,email,passowrd,role,userId,phoneNo} = req.body;
 
 
-        console.log("name : ",name,"email : ",email,"passowrd : ",passowrd,"role : ",role,"userId : ",userId);
+        console.log("name : ",name,"email : ",email,"passowrd : ",passowrd,"role : ",role,"userId : ",userId,"phoneNo",phoneNo);
 
         let dataToUpdate = {};
 
@@ -181,6 +181,11 @@ const updateMembersData = async (req, res) => {
             
             dataToUpdate.role = role;
             
+        }
+
+        if(phoneNo){
+
+            dataToUpdate.phoneNo = phoneNo;
         }
 
         if(passowrd){

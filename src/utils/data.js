@@ -31,7 +31,11 @@ export const order_status = {
 export const delivery_status = ['Pending', 'In Production', 'Packing', 'Shipped', 'Delivered']
 
 
-export const quote_schema = ['Draft', 'Finalized'];
+// export const quote_schema = ['Draft', 'Finalized'];
 
-
+export const quote_status = {
+    DRAFT: 'Draft',
+    APPROVED: 'Approved',
+    REJECTED: 'Rejected'
+};
 

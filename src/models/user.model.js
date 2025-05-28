@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema({
     enum: Object.values(user_role),
     default: 'sales'
   },
+  phoneNo:{
+
+    type:String
+    
+  },
   vendorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor' }, // for vendor login users only
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }

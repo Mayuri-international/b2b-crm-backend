@@ -2,6 +2,8 @@
 
 import mongoose from 'mongoose';
 
+import {quote_status} from "../utils/data.js";
+
 const vendorSplitSchema = new mongoose.Schema({
     vendorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor', required: true },
     description: String,
@@ -25,7 +27,7 @@ const quoteSchema = new mongoose.Schema({
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
     version: { type: Number, required: true },
     items: [quoteItemSchema],
-    addedBy:{type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     gstPercent: Number,
     taxPercent: Number,
     transport: Number,
@@ -33,16 +35,20 @@ const quoteSchema = new mongoose.Schema({
     totalAmount: Number,
     reason: String, // reason for revision if not version 1
     notes: String,
-    image:String,
+    image: String,
     sentToClient: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    status: { type: String, enum: ['Draft', 'Finalized'], default: 'Draft' },
+    status: {
+        type: String,
+        enum: [...Object.values(quote_status), ...Object.values(quote_status).map(v => v.toLowerCase())],
+        default: quote_status.DRAFT
+    },
     createdAt: { type: Date, default: Date.now },
 
-},{
+}, {
 
-    timestamps:true,
-    
+    timestamps: true,
+
 });
 
 const Quote = mongoose.model('Quote', quoteSchema);
